@@ -8,6 +8,7 @@ use std::process::Command;
 
 // macOS: Store in user's Application Support directory
 #[cfg(target_os = "macos")]
+#[allow(dead_code)]
 pub fn get_machine_id_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     PathBuf::from(home).join("Library/Application Support/Kiro/machineid")
@@ -15,16 +16,19 @@ pub fn get_machine_id_path() -> PathBuf {
 
 // Linux: Use system-wide machine-id
 #[cfg(target_os = "linux")]
+#[allow(dead_code)]
 pub fn get_machine_id_path() -> PathBuf {
     PathBuf::from("/etc/machine-id")
 }
 
 // Windows: Registry path (marker only, actual access via reg command)
 #[cfg(target_os = "windows")]
+#[allow(dead_code)]
 pub fn get_machine_id_path() -> PathBuf {
     PathBuf::from("HKLM\\SOFTWARE\\Microsoft\\Cryptography\\MachineGuid")
 }
 
+#[allow(dead_code)]
 pub fn read_machine_id() -> Result<String> {
     #[cfg(target_os = "macos")]
     {
@@ -148,6 +152,7 @@ pub fn write_machine_id(machine_id: &str) -> Result<()> {
 
 // Convert 32-char hex string to UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 #[cfg(target_os = "linux")]
+#[allow(dead_code)]
 fn format_as_uuid(hex: &str) -> String {
     let clean = hex.replace('-', "").to_lowercase();
     if clean.len() != 32 {
