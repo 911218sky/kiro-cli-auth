@@ -152,4 +152,5 @@ kiro-cli-auth logout             # Logout current account
 kiro-cli-auth clean              # Clean invalid accounts
 kiro-cli-auth export <file>      # Export accounts
 kiro-cli-auth import <file>      # Import accounts
+kiro-cli-auth self-update        # Update to latest version
 ```
