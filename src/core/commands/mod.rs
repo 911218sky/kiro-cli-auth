@@ -300,8 +300,8 @@ pub fn cmd_list(fm: &FileManager) -> Result<()> {
     println!("\n{}", ui::bold("Accounts:"));
     println!("{}", "─".repeat(90));
 
-    for (account, is_current, info_opt) in results {
-        let marker = if is_current { "●" } else { "○" };
+    for (account, is_current, info_opt) in &results {
+        let marker = if *is_current { "●" } else { "○" };
         
         let info_str = if let Some(info) = info_opt {
             let sub_colored = match info.subscription_type.as_str() {
@@ -358,6 +358,49 @@ pub fn cmd_list(fm: &FileManager) -> Result<()> {
 
     println!("{}", "─".repeat(90));
     println!("{} {} accounts\n", ui::bold("Total:"), accounts.len());
+    
+    // Calculate total usage statistics
+    let mut total_current: f64 = 0.0;
+    let mut total_limit: f64 = 0.0;
+    let mut active_accounts = 0;
+    
+    for (_, _, info_opt) in &results {
+        if let Some(info) = info_opt {
+            if !info.is_banned {
+                total_current += info.current_usage;
+                total_limit += info.usage_limit;
+                active_accounts += 1;
+            }
+        }
+    }
+    
+    if active_accounts > 0 {
+        let total_remaining = total_limit - total_current;
+        let total_percent = if total_limit > 0.0 {
+            (total_current / total_limit * 100.0) as i32
+        } else {
+            0
+        };
+        
+        println!("{}", ui::bold("Usage Summary:"));
+        println!("  Active accounts: {}", ui::cyan(&active_accounts.to_string()));
+        println!("  Total used:      {} / {}", 
+            ui::yellow(&format!("{:.0}", total_current)),
+            ui::green(&format!("{:.0}", total_limit))
+        );
+        println!("  Total remaining: {} ({}%)", 
+            ui::green(&format!("{:.0}", total_remaining)),
+            if total_percent > 90 {
+                ui::red(&format!("{}", 100 - total_percent))
+            } else if total_percent > 70 {
+                ui::yellow(&format!("{}", 100 - total_percent))
+            } else {
+                ui::green(&format!("{}", 100 - total_percent))
+            }
+        );
+        println!();
+    }
+    
     Ok(())
 }
 
