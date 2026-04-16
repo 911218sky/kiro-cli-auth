@@ -44,6 +44,14 @@ Or manually download and run `install.bat` as Administrator:
 # Run install.bat as Administrator
 ```
 
+## Update
+
+```bash
+kiro-cli-auth self-update
+```
+
+Or reinstall using the install script (same as installation).
+
 ## Uninstall
 
 ### Linux/macOS
