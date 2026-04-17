@@ -84,30 +84,41 @@ impl FileManager {
     }
 
     /// Locate the main kiro-cli data.sqlite3 by checking multiple standard paths.
-    /// Returns the first existing file, or the XDG default if none exist yet.
+    /// Returns the first existing file, or the platform default if none exist yet.
     pub fn kiro_data_path(&self) -> Result<PathBuf> {
-        let home = dirs::home_dir()
-            .ok_or_else(|| anyhow::anyhow!("Cannot determine home directory ($HOME is not set)"))?;
-
-        let xdg_candidate = std::env::var("XDG_DATA_HOME").ok()
-            .filter(|x| !x.is_empty())
-            .map(|x| PathBuf::from(x).join("kiro-cli/data.sqlite3"));
-
-        let candidates: &[Option<PathBuf>] = &[
-            xdg_candidate,
-            Some(home.join(".local/share/kiro-cli/data.sqlite3")),
-            Some(home.join(".config/kiro-cli/data.sqlite3")),
-            Some(home.join(".kiro-cli/data.sqlite3")),
-        ];
-
-        for candidate in candidates.iter().flatten() {
-            if candidate.exists() {
-                return Ok(candidate.clone());
-            }
+        #[cfg(target_os = "windows")]
+        {
+            let appdata = std::env::var("APPDATA")
+                .context("APPDATA environment variable not set")?;
+            let candidate = PathBuf::from(appdata).join("kiro-cli/data.sqlite3");
+            return Ok(candidate);
         }
 
-        // Default fallback (file may not exist yet — login will create it)
-        Ok(home.join(".local/share/kiro-cli/data.sqlite3"))
+        #[cfg(not(target_os = "windows"))]
+        {
+            let home = dirs::home_dir()
+                .ok_or_else(|| anyhow::anyhow!("Cannot determine home directory ($HOME is not set)"))?;
+
+            let xdg_candidate = std::env::var("XDG_DATA_HOME").ok()
+                .filter(|x| !x.is_empty())
+                .map(|x| PathBuf::from(x).join("kiro-cli/data.sqlite3"));
+
+            let candidates: &[Option<PathBuf>] = &[
+                xdg_candidate,
+                Some(home.join(".local/share/kiro-cli/data.sqlite3")),
+                Some(home.join(".config/kiro-cli/data.sqlite3")),
+                Some(home.join(".kiro-cli/data.sqlite3")),
+            ];
+
+            for candidate in candidates.iter().flatten() {
+                if candidate.exists() {
+                    return Ok(candidate.clone());
+                }
+            }
+
+            // Default fallback (file may not exist yet — login will create it)
+            Ok(home.join(".local/share/kiro-cli/data.sqlite3"))
+        }
     }
 
     pub fn account_snapshot_path(&self, alias: &str) -> PathBuf {
