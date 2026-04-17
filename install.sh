@@ -3,35 +3,64 @@ set -e
 
 echo "🔧 Installing kiro-cli-auth..."
 
-# 檢查是否為 root
+# Check root
 if [ "$EUID" -ne 0 ]; then 
-    echo "❌ Please run with sudo: sudo ./install.sh"
+    echo "❌ Please run with sudo"
     exit 1
 fi
 
-# 檢查是否已編譯
-if [ ! -f "target/release/kiro-cli-auth" ]; then
-    echo "❌ Binary not found. Please build first:"
-    echo "   cargo build --release"
+# Detect OS and architecture
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+case "$OS" in
+    linux)
+        case "$ARCH" in
+            x86_64) BINARY="kiro-cli-auth-linux-x86_64" ;;
+            aarch64|arm64) BINARY="kiro-cli-auth-linux-aarch64" ;;
+            *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
+        esac
+        ;;
+    darwin)
+        case "$ARCH" in
+            x86_64) BINARY="kiro-cli-auth-macos-x86_64" ;;
+            arm64) BINARY="kiro-cli-auth-macos-aarch64" ;;
+            *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
+        esac
+        ;;
+    *)
+        echo "❌ Unsupported OS: $OS"
+        exit 1
+        ;;
+esac
+
+echo "📥 Downloading $BINARY..."
+DOWNLOAD_URL="https://github.com/911218sky/kiro-cli-auth/releases/latest/download/$BINARY"
+TEMP_FILE="/tmp/kiro-cli-auth"
+
+if command -v curl &> /dev/null; then
+    curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_FILE"
+elif command -v wget &> /dev/null; then
+    wget -q "$DOWNLOAD_URL" -O "$TEMP_FILE"
+else
+    echo "❌ curl or wget required"
     exit 1
 fi
 
-# 安裝到系統路徑
+# Install
 INSTALL_PATH="/usr/local/bin/kiro-cli-auth"
-echo "📥 Installing to $INSTALL_PATH..."
-cp target/release/kiro-cli-auth "$INSTALL_PATH"
+echo "📦 Installing to $INSTALL_PATH..."
+mv "$TEMP_FILE" "$INSTALL_PATH"
 chmod +x "$INSTALL_PATH"
 
-# 驗證安裝
+# Verify
 if command -v kiro-cli-auth &> /dev/null; then
     VERSION=$(kiro-cli-auth --version 2>&1 || echo "unknown")
     echo "✅ Installation successful!"
     echo "   Version: $VERSION"
-    echo "   Path: $INSTALL_PATH"
 else
-    echo "⚠️  Installation completed but kiro-cli-auth not found in PATH"
-    echo "   You may need to add /usr/local/bin to your PATH"
+    echo "⚠️  Installed but not in PATH"
 fi
 
 echo ""
-echo "🎉 Done! You can now use: kiro-cli-auth"
+echo "🎉 Done! Run: kiro-cli-auth"
