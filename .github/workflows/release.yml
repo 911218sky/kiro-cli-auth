@@ -101,6 +101,7 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build
+        shell: bash
         run: |
           VERSION_NO_V="${{ needs.version.outputs.version_no_v }}"
           
