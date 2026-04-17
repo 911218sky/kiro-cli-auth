@@ -15,13 +15,24 @@ pub struct FileManager {
 
 impl FileManager {
     pub fn new() -> Result<Self> {
-        // Allow override via env var, otherwise use .kiro-cli-auth next to executable
+        // Allow override via env var
         let base_dir = if let Ok(custom_path) = std::env::var("KIRO_CLI_AUTH_DIR") {
             PathBuf::from(custom_path)
         } else {
-            let exe_path = std::env::current_exe().context("Cannot get executable path")?;
-            let exe_dir = exe_path.parent().context("Cannot get executable directory")?;
-            exe_dir.join(".kiro-cli-auth")
+            // Use platform-appropriate user data directory
+            #[cfg(target_os = "windows")]
+            {
+                let appdata = std::env::var("APPDATA")
+                    .context("APPDATA environment variable not set")?;
+                PathBuf::from(appdata).join("kiro-cli-auth")
+            }
+            
+            #[cfg(not(target_os = "windows"))]
+            {
+                let home = dirs::home_dir()
+                    .context("Cannot determine home directory")?;
+                home.join(".kiro-cli-auth")
+            }
         };
         
         if !base_dir.exists() {
