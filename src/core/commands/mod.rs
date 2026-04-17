@@ -160,7 +160,7 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
     
     // Save current account if it exists and isn't already registered
     if kiro_data.exists() {
-        let mut should_remove = true;
+        let should_remove = true;
         
         if let Ok((current_email, _)) = extract_account_info(&kiro_data) {
             let accounts = db::list_accounts(&conn)?;
