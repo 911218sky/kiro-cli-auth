@@ -48,14 +48,19 @@ pub fn migrate_from_json_if_needed(base_dir: &Path) -> Result<bool> {
     // Create new SQLite database
     let conn = db::init_db(&db_path)?;
     
-    // Migrate all accounts
+    // Migrate all accounts with updated local paths
     for legacy_account in legacy_registry.accounts {
+        // Recalculate snapshot_path to use current device's base_dir
+        let local_snapshot_path = base_dir
+            .join("accounts")
+            .join(format!("{}.sqlite3", legacy_account.alias));
+        
         let account = Account {
             id: legacy_account.id,
             alias: legacy_account.alias.clone(),
             email: legacy_account.email,
             provider: legacy_account.provider,
-            snapshot_path: legacy_account.snapshot_path,
+            snapshot_path: local_snapshot_path.to_string_lossy().to_string(),
             created_at: legacy_account.created_at,
             last_used: legacy_account.last_used,
             machine_id: None,

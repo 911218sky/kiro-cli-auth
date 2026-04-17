@@ -78,7 +78,11 @@ impl Importer {
                 db::remove_account(&local_conn, &account.alias)?;
             }
             
-            db::add_account(&local_conn, &account)?;
+            // Update snapshot_path to use local path instead of imported absolute path
+            let mut local_account = account.clone();
+            local_account.snapshot_path = local_snapshot.to_string_lossy().to_string();
+            
+            db::add_account(&local_conn, &local_account)?;
             println!("✅ Imported account: {}", account.alias);
         }
 

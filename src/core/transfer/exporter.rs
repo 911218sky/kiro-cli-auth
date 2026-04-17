@@ -56,6 +56,12 @@ impl Exporter {
         fs::set_permissions(&accounts_dir, fs::Permissions::from_mode(0o700))?;
 
         for account in &accounts {
+            // Sanitize alias to prevent path traversal
+            if !account.alias.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+                eprintln!("⚠️  Skipping account with unsafe alias: '{}'", account.alias);
+                continue;
+            }
+            
             let snapshot_path = Path::new(&account.snapshot_path);
             if !snapshot_path.exists() {
                 eprintln!("⚠️  Snapshot not found for '{}', skipping", account.alias);
