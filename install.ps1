@@ -28,6 +28,7 @@ try {
     $release = Invoke-RestMethod -Uri $apiUrl -Headers @{ "User-Agent" = "kiro-cli-auth-installer" }
 } catch {
     Write-Host "ERROR: Failed to fetch release info: $_" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
@@ -36,6 +37,7 @@ $asset = $release.assets | Where-Object { $_.name -eq "kiro-cli-auth-windows.exe
 
 if (-not $asset) {
     Write-Host "ERROR: Windows binary not found in release $version" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
@@ -51,6 +53,7 @@ try {
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile -UseBasicParsing
 } catch {
     Write-Host "ERROR: Failed to download: $_" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
@@ -67,6 +70,7 @@ try {
     Move-Item -Path $tempFile -Destination $installPath -Force
 } catch {
     Write-Host "ERROR: Failed to install binary: $_" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
@@ -86,3 +90,4 @@ Write-Host "Location: $installPath" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Please restart your terminal, then run: kiro-cli-auth --version" -ForegroundColor Yellow
 Write-Host ""
+Read-Host "Press Enter to exit"
