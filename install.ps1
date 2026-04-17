@@ -2,10 +2,22 @@
 
 $ErrorActionPreference = "Stop"
 
-# Auto-elevate to Administrator
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+# Auto-elevate to Administrator (only when running as a file, not piped)
+if ($PSCommandPath -and -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
     exit
+}
+
+# Check admin when piped
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "ERROR: Administrator privileges required." -ForegroundColor Red
+    Write-Host "Please run PowerShell as Administrator and try again." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Or download and run the script:" -ForegroundColor Cyan
+    Write-Host "  Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/install.ps1' -OutFile 'install.ps1'" -ForegroundColor Gray
+    Write-Host "  .\install.ps1" -ForegroundColor Gray
+    Read-Host "Press Enter to exit"
+    exit 1
 }
 
 Write-Host "Installing kiro-cli-auth for Windows..." -ForegroundColor Cyan
