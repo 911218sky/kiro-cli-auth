@@ -1,20 +1,15 @@
 # kiro-cli-auth Windows Installer
-# Run as Administrator
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "Installing kiro-cli-auth for Windows..." -ForegroundColor Cyan
-Write-Host ""
-
-# Check for admin privileges
-$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Host "ERROR: This script requires Administrator privileges." -ForegroundColor Red
-    Write-Host "Please run PowerShell as Administrator and try again." -ForegroundColor Yellow
-    exit 1
+# Auto-elevate to Administrator
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
 }
 
-# Get latest release info
+Write-Host "Installing kiro-cli-auth for Windows..." -ForegroundColor Cyan
+Write-Host ""# Get latest release info
 Write-Host "Fetching latest release..." -ForegroundColor Cyan
 $apiUrl = "https://api.github.com/repos/911218sky/kiro-cli-auth/releases/latest"
 try {

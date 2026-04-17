@@ -32,7 +32,7 @@ sudo mv kiro-cli-auth-macos /usr/local/bin/kiro-cli-auth
 
 ### Windows
 
-Run in PowerShell as Administrator:
+Run in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/install.ps1 | iex
@@ -40,9 +40,8 @@ irm https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/install.ps1 |
 
 Or manually:
 ```powershell
-# Download install.ps1
+# Download and run (will auto-request admin privileges)
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/install.ps1" -OutFile "install.ps1"
-# Run as Administrator
 .\install.ps1
 ```
 
