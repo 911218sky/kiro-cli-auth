@@ -160,6 +160,8 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
     
     // Save current account if it exists and isn't already registered
     if kiro_data.exists() {
+        let mut should_remove = true;
+        
         if let Ok((current_email, _)) = extract_account_info(&kiro_data) {
             let accounts = db::list_accounts(&conn)?;
             
@@ -191,8 +193,10 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
             }
         }
         
-        println!("{} Removing local login data...", ui::cyan("→"));
-        fs::remove_file(&kiro_data)?;
+        if should_remove {
+            println!("{} Removing local login data...", ui::cyan("→"));
+            fs::remove_file(&kiro_data)?;
+        }
     }
 
     // Invoke kiro-cli login command
