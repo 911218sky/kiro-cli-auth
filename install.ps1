@@ -2,6 +2,14 @@
 
 $ErrorActionPreference = "Stop"
 
+# Check if kiro-cli is installed
+if (-not (Get-Command kiro-cli -ErrorAction SilentlyContinue)) {
+    Write-Host "ERROR: kiro-cli is not installed" -ForegroundColor Red
+    Write-Host "Please install kiro-cli first from: https://github.com/aws/kiro-cli" -ForegroundColor Yellow
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
 # Auto-elevate to Administrator (only when running as a file, not piped)
 if ($PSCommandPath -and -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs

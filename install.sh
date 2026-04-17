@@ -3,6 +3,13 @@ set -e
 
 echo "🔧 Installing kiro-cli-auth..."
 
+# Check if kiro-cli is installed
+if ! command -v kiro-cli &> /dev/null; then
+    echo "❌ kiro-cli is not installed"
+    echo "   Please install kiro-cli first from: https://github.com/aws/kiro-cli"
+    exit 1
+fi
+
 # Check root
 if [ "$EUID" -ne 0 ]; then 
     echo "❌ Please run with sudo"
