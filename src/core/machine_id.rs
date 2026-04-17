@@ -10,8 +10,9 @@ use std::process::Command;
 #[cfg(target_os = "macos")]
 #[allow(dead_code)]
 pub fn get_machine_id_path() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-    PathBuf::from(home).join("Library/Application Support/Kiro/machineid")
+    dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("/tmp"))
+        .join("Library/Application Support/Kiro/machineid")
 }
 
 // Linux: Use system-wide machine-id
@@ -140,12 +141,23 @@ pub fn write_machine_id(machine_id: &str) -> Result<()> {
                 "/f",
             ])
             .output()
-            .context("Failed to update Windows registry")?;
+            .context("Failed to execute reg command")?;
         
         if output.status.success() {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Failed to write Windows machine ID (requires admin)"))
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if stderr.contains("Access is denied") || stderr.contains("拒絕存取") {
+                Err(anyhow::anyhow!(
+                    "Failed to write Windows machine ID: Administrator privileges required.\n\
+                     Please run PowerShell as Administrator."
+                ))
+            } else {
+                Err(anyhow::anyhow!(
+                    "Failed to write Windows machine ID: {}", 
+                    stderr.trim()
+                ))
+            }
         }
     }
 }

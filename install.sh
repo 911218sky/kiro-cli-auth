@@ -10,10 +10,15 @@ if ! command -v kiro-cli &> /dev/null; then
     exit 1
 fi
 
-# Check root
-if [ "$EUID" -ne 0 ]; then 
-    echo "❌ Please run with sudo"
-    exit 1
+# Determine install location
+if [ "$EUID" -eq 0 ]; then
+    INSTALL_PATH="/usr/local/bin/kiro-cli-auth"
+    echo "📦 Installing system-wide..."
+else
+    INSTALL_PATH="$HOME/.local/bin/kiro-cli-auth"
+    mkdir -p "$HOME/.local/bin"
+    echo "📦 Installing to user directory..."
+    echo "   (Run with sudo for system-wide installation)"
 fi
 
 # Detect OS and architecture
@@ -55,7 +60,6 @@ else
 fi
 
 # Install
-INSTALL_PATH="/usr/local/bin/kiro-cli-auth"
 echo "📦 Installing to $INSTALL_PATH..."
 mv "$TEMP_FILE" "$INSTALL_PATH"
 chmod +x "$INSTALL_PATH"
@@ -67,6 +71,11 @@ if command -v kiro-cli-auth &> /dev/null; then
     echo "   Version: $VERSION"
 else
     echo "⚠️  Installed but not in PATH"
+    if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "Add to your PATH by adding this to ~/.bashrc or ~/.zshrc:"
+        echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    fi
 fi
 
 echo ""

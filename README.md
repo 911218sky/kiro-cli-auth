@@ -12,9 +12,15 @@ curl -fsSL https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/instal
 
 Or manually:
 ```bash
-wget https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-linux
-chmod +x kiro-cli-auth-linux
-sudo mv kiro-cli-auth-linux /usr/local/bin/kiro-cli-auth
+# For x86_64:
+wget https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-linux-x86_64
+chmod +x kiro-cli-auth-linux-x86_64
+sudo mv kiro-cli-auth-linux-x86_64 /usr/local/bin/kiro-cli-auth
+
+# For ARM64:
+wget https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-linux-aarch64
+chmod +x kiro-cli-auth-linux-aarch64
+sudo mv kiro-cli-auth-linux-aarch64 /usr/local/bin/kiro-cli-auth
 ```
 
 ### macOS
@@ -25,9 +31,15 @@ curl -fsSL https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/instal
 
 Or manually:
 ```bash
-curl -LO https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-macos
-chmod +x kiro-cli-auth-macos
-sudo mv kiro-cli-auth-macos /usr/local/bin/kiro-cli-auth
+# For Intel (x86_64):
+curl -LO https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-macos-x86_64
+chmod +x kiro-cli-auth-macos-x86_64
+sudo mv kiro-cli-auth-macos-x86_64 /usr/local/bin/kiro-cli-auth
+
+# For Apple Silicon (ARM64):
+curl -LO https://github.com/911218sky/kiro-cli-auth/releases/latest/download/kiro-cli-auth-macos-aarch64
+chmod +x kiro-cli-auth-macos-aarch64
+sudo mv kiro-cli-auth-macos-aarch64 /usr/local/bin/kiro-cli-auth
 ```
 
 ### Windows

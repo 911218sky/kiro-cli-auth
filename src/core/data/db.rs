@@ -10,6 +10,15 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
     let conn = Connection::open(db_path)
         .context("Failed to open database")?;
     
+    // Set restrictive permissions immediately after creation
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Err(e) = std::fs::set_permissions(db_path, std::fs::Permissions::from_mode(0o600)) {
+            eprintln!("Warning: Failed to set database permissions: {}", e);
+        }
+    }
+    
     conn.execute(
         "CREATE TABLE IF NOT EXISTS accounts (
             id TEXT PRIMARY KEY,
