@@ -57,7 +57,7 @@ impl Exporter {
 
         for account in &accounts {
             // Sanitize alias to prevent path traversal
-            if !account.alias.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+            if !account.alias.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == '+') {
                 eprintln!("⚠️  Skipping account with unsafe alias: '{}'", account.alias);
                 continue;
             }
