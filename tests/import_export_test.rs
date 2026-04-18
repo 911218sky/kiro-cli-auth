@@ -330,12 +330,12 @@ fn test_import_cross_platform_windows_to_linux() -> Result<()> {
     let target_conn = target_fm.get_db_connection()?;
     let imported = db::find_account(&target_conn, "work")?.unwrap();
     
-    // Path should be updated to local Linux path, not Windows path
+    // Path should be updated to local path, not the original Windows absolute path
     let expected_path = target_fm.account_snapshot_path("work");
     assert_eq!(imported.snapshot_path, expected_path.to_string_lossy().to_string());
-    assert!(!imported.snapshot_path.contains("C:\\"));
-    assert!(!imported.snapshot_path.contains("\\"));
+    assert!(!imported.snapshot_path.contains("C:\\Users\\user\\.kiro-cli-auth"));
     assert!(expected_path.exists());
+
     
     let content = fs::read_to_string(&imported.snapshot_path)?;
     assert_eq!(content, "windows data");
@@ -522,7 +522,7 @@ fn test_migration_cross_platform_paths() -> Result<()> {
     // Path should be updated to local path, not Windows path
     let expected_path = accounts_dir.join("work.sqlite3");
     assert_eq!(account.snapshot_path, expected_path.to_string_lossy().to_string());
-    assert!(!account.snapshot_path.contains("C:\\"));
+    assert!(!account.snapshot_path.contains("C:\\Users\\olduser\\.kiro-cli-auth"));
     
     Ok(())
 }

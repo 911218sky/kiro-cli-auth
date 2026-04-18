@@ -584,6 +584,11 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
     let kiro_data = fm.kiro_data_path()?;
     let lock_path = kiro_data.with_extension("lock");
     
+    
+    // Ensure parent directory exists (kiro-cli may not have run yet on this machine)
+    if let Some(parent) = lock_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
     // Acquire file lock to prevent concurrent switches
     let lock_file = fs::OpenOptions::new()
         .create(true)
