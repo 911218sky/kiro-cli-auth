@@ -178,3 +178,43 @@ pub fn refresh_token(refresh_token: &str) -> Result<RefreshTokenResponse> {
 
     Ok(refresh_response)
 }
+
+#[derive(Debug, serde::Serialize)]
+struct OidcRefreshRequest {
+    #[serde(rename = "clientId")]
+    client_id: String,
+    #[serde(rename = "clientSecret")]
+    client_secret: String,
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+    #[serde(rename = "grantType")]
+    grant_type: String,
+}
+
+// Exchange refresh token for new access token (AWS Builder ID / OIDC)
+pub fn refresh_token_oidc(refresh_token: &str, client_id: &str, client_secret: &str, region: &str) -> Result<RefreshTokenResponse> {
+    let url = format!("https://oidc.{}.amazonaws.com/token", region);
+
+    let request_body = OidcRefreshRequest {
+        client_id: client_id.to_string(),
+        client_secret: client_secret.to_string(),
+        refresh_token: refresh_token.to_string(),
+        grant_type: "refresh_token".to_string(),
+    };
+
+    let response = ureq::post(&url)
+        .timeout(std::time::Duration::from_secs(10))
+        .set("Content-Type", "application/json")
+        .send_json(&request_body)
+        .map_err(|e| anyhow::anyhow!("Token refresh failed: {}", e))?;
+
+    let data: serde_json::Value = response.into_json()
+        .context("Failed to parse OIDC refresh response")?;
+
+    Ok(RefreshTokenResponse {
+        access_token: data["accessToken"].as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing accessToken in OIDC response"))?.to_string(),
+        refresh_token: data["refreshToken"].as_str().map(|s| s.to_string()),
+        expires_in: data["expiresIn"].as_u64(),
+    })
+}

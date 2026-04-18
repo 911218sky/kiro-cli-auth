@@ -11,8 +11,8 @@ use rusqlite::params;
 use std::os::unix::fs::PermissionsExt;
 
 use crate::ui;
-use crate::core::auth::api::{get_account_info, refresh_token, AccountInfo};
-use crate::core::auth::token::{extract_account_info, extract_token, extract_refresh_token, update_token};
+use crate::core::auth::api::{get_account_info, refresh_token, refresh_token_oidc, AccountInfo};
+use crate::core::auth::token::{extract_account_info, extract_token, extract_refresh_token, update_token, read_aws_sso_credentials};
 use crate::core::data::db;
 use crate::core::transfer::{Exporter, Importer, Updater};
 use crate::core::fs::FileManager;
@@ -630,25 +630,36 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
 
     // Refresh token to avoid 403 errors
     let mut token_refreshed = false;
+    // Refresh token - use OIDC for AWS Builder ID, social endpoint for Google
+    let mut token_refreshed = false;
     match extract_refresh_token(&kiro_data) {
-        Ok(refresh_token) => {
-            match crate::core::auth::api::refresh_token(&refresh_token) {
+        Ok(refresh_tok) => {
+            // Determine provider from snapshot
+            let provider = extract_account_info(&kiro_data).map(|(_, p)| p).unwrap_or_default();
+            let refresh_result = if provider == "builder-id" {
+                if let Some((client_id, client_secret, region)) = read_aws_sso_credentials() {
+                    refresh_token_oidc(&refresh_tok, &client_id, &client_secret, &region)
+                } else {
+                    // Fallback to social endpoint if SSO cache not found
+                    refresh_token(&refresh_tok)
+                }
+            } else {
+                refresh_token(&refresh_tok)
+            };
+            match refresh_result {
                 Ok(response) => {
                     let new_refresh = response.refresh_token.as_deref();
                     if let Err(e) = update_token(&kiro_data, &response.access_token, new_refresh) {
                         println!("{} Token update failed: {}", ui::yellow("⚠"), e);
                         println!("{} You may need to re-login this account", ui::yellow("⚠"));
                     } else {
-                        // Sync updated token back to snapshot
                         if let Err(e) = fs::copy(&kiro_data, snapshot_path) {
                             return Err(anyhow!("Failed to sync updated token to snapshot: {}", e));
                         }
-                        
                         #[cfg(unix)]
                         if let Err(e) = fs::set_permissions(snapshot_path, fs::Permissions::from_mode(0o600)) {
                             println!("{} Failed to set snapshot permissions: {}", ui::yellow("⚠"), e);
                         }
-                        
                         token_refreshed = true;
                     }
                 }
