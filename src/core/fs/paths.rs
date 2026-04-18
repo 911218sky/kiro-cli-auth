@@ -22,8 +22,8 @@ impl FileManager {
             // Use platform-appropriate user data directory
             #[cfg(target_os = "windows")]
             {
-                let appdata = std::env::var("APPDATA")
-                    .context("APPDATA environment variable not set")?;
+            let appdata = std::env::var("APPDATA")
+                .context("APPDATA environment variable not set")?;
                 PathBuf::from(appdata).join("kiro-cli-auth")
             }
             
@@ -88,9 +88,9 @@ impl FileManager {
     pub fn kiro_data_path(&self) -> Result<PathBuf> {
         #[cfg(target_os = "windows")]
         {
-            let appdata = std::env::var("APPDATA")
-                .context("APPDATA environment variable not set")?;
-            let candidate = PathBuf::from(appdata).join("kiro-cli/data.sqlite3");
+            let localappdata = std::env::var("LOCALAPPDATA")
+                .context("LOCALAPPDATA environment variable not set")?;
+            let candidate = PathBuf::from(localappdata).join("kiro-cli/data.sqlite3");
             return Ok(candidate);
         }
 
