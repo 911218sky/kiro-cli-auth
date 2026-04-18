@@ -1,7 +1,6 @@
 use anyhow::Result;
 #[cfg(not(target_os = "linux"))]
 use anyhow::Context;
-use std::fs;
 use std::path::PathBuf;
 #[cfg(not(target_os = "linux"))]
 use std::process::Command;
@@ -181,6 +180,7 @@ fn format_as_uuid(hex: &str) -> String {
 }
 
 #[cfg(not(target_os = "linux"))]
+#[allow(dead_code)]
 fn format_as_uuid(s: &str) -> String {
     s.to_string()
 }

@@ -628,8 +628,6 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
     #[cfg(unix)]
     fs::set_permissions(&kiro_data, fs::Permissions::from_mode(0o600))?;
 
-    // Refresh token to avoid 403 errors
-    let mut token_refreshed = false;
     // Refresh token - use OIDC for AWS Builder ID, social endpoint for Google
     let mut token_refreshed = false;
     match extract_refresh_token(&kiro_data) {
