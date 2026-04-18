@@ -1,7 +1,6 @@
 use anyhow::Result;
 #[cfg(not(target_os = "linux"))]
 use anyhow::Context;
-use std::fs;
 use std::path::PathBuf;
 #[cfg(not(target_os = "linux"))]
 use std::process::Command;

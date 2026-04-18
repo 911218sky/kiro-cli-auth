@@ -21,9 +21,9 @@ use crate::core::models::Account;
 /// Format account display string consistently across all commands
 fn format_account_display(account: &Account, is_current: bool, info_opt: Option<&AccountInfo>) -> String {
     let prefix = if is_current { 
-        ui::cyan("‚ó?") 
+        ui::cyan("‚óè ") 
     } else { 
-        ui::cyan("‚ó?") 
+        ui::cyan("‚óã ") 
     };
     
     let provider = match account.provider.as_str() {
@@ -45,9 +45,9 @@ fn format_account_display(account: &Account, is_current: bool, info_opt: Option<
         };
         
         let status = if info.is_banned {
-            ui::red("‚ú?Banned")
+            ui::red("‚úó Banned")
         } else {
-            ui::green("‚ú?Active")
+            ui::green("‚úì Active")
         };
         
         if info.usage_limit > 0.0 {
@@ -167,7 +167,7 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
             
             if accounts.iter().all(|a| a.email != current_email) {
                 let current_alias = current_email.split('@').next().unwrap_or("current").to_string();
-                println!("{} Saving current account as '{}'...", ui::cyan("‚Ü?), ui::cyan(&current_alias));
+                println!("{} Saving current account as '{}'...", ui::cyan("‚Üí"), ui::cyan(&current_alias));
                 let snapshot_path = fm.account_snapshot_path(&current_alias);
                 if let Some(parent) = snapshot_path.parent() {
                     fs::create_dir_all(parent)?;
@@ -189,12 +189,12 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
                 };
                 
                 db::add_account(&conn, &account)?;
-                println!("{} Current account saved", ui::green("‚ú?));
+                println!("{} Current account saved", ui::green("‚úì"));
             }
         }
         
         if should_remove {
-            println!("{} Removing local login data...", ui::cyan("‚Ü?));
+            println!("{} Removing local login data...", ui::cyan("‚Üí"));
             if let Err(e) = fs::remove_file(&kiro_data) {
                 #[cfg(target_os = "windows")]
                 if e.raw_os_error() == Some(32) {
@@ -206,7 +206,7 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
     }
 
     // Invoke kiro-cli login command
-    println!("{} Logging in...", ui::cyan("‚Ü?));
+    println!("{} Logging in...", ui::cyan("‚Üí"));
     let status = Command::new("kiro-cli")
         .arg("login")
         .status()
@@ -259,7 +259,7 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
         };
         db::remove_account(&conn, &final_alias)?;
         db::add_account(&conn, &updated)?;
-        println!("{} Account '{}' updated", ui::green("‚ú?), ui::cyan(&final_alias));
+        println!("{} Account '{}' updated", ui::green("‚úì"), ui::cyan(&final_alias));
     } else {
         let account = Account {
             id: uuid::Uuid::new_v4().to_string(),
@@ -272,7 +272,7 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
             machine_id: Some(uuid::Uuid::new_v4().to_string().to_lowercase()),
         };
         db::add_account(&conn, &account)?;
-        println!("{} Account '{}' added", ui::green("‚ú?), ui::cyan(&final_alias));
+        println!("{} Account '{}' added", ui::green("‚úì"), ui::cyan(&final_alias));
     }
     
     Ok(())
@@ -311,7 +311,7 @@ pub fn cmd_list(fm: &FileManager) -> Result<()> {
     println!("{}", "‚îÄ".repeat(90));
 
     for (account, is_current, info_opt) in &results {
-        let marker = if *is_current { "‚ó? } else { "‚ó? };
+        let marker = if *is_current { "‚óè" } else { "‚óã" };
         
         let info_str = if let Some(info) = info_opt {
             let sub_colored = match info.subscription_type.as_str() {
@@ -325,7 +325,7 @@ pub fn cmd_list(fm: &FileManager) -> Result<()> {
             let status_str = if info.is_banned {
                 ui::red("üö´ BANNED")
             } else {
-                ui::green("‚ú?Active")
+                ui::green("‚úì Active")
             };
             
             let percent = if info.usage_limit > 0.0 {
@@ -466,7 +466,7 @@ pub fn cmd_current(fm: &FileManager) -> Result<()> {
         }
     
     if account.is_none() {
-        println!("\n{}", ui::yellow("‚ö?Account not in registry. Run 'kiro-cli-auth login' to add it."));
+        println!("\n{}", ui::yellow("‚ö† Account not in registry. Run 'kiro-cli-auth login' to add it."));
     }
     
     println!("{}\n", "‚îÄ".repeat(50));
@@ -531,7 +531,7 @@ pub fn cmd_remove(fm: &FileManager, alias: Option<String>) -> Result<()> {
         }
         
         db::remove_account(&conn, alias)?;
-        println!("{} Account '{}' removed", ui::green("‚ú?), ui::cyan(alias));
+        println!("{} Account '{}' removed", ui::green("‚úì"), ui::cyan(alias));
     }
     
     Ok(())
@@ -648,27 +648,27 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
                 Ok(response) => {
                     let new_refresh = response.refresh_token.as_deref();
                     if let Err(e) = update_token(&kiro_data, &response.access_token, new_refresh) {
-                        println!("{} Token update failed: {}", ui::yellow("‚ö?), e);
-                        println!("{} You may need to re-login this account", ui::yellow("‚ö?));
+                        println!("{} Token update failed: {}", ui::yellow("‚ö†"), e);
+                        println!("{} You may need to re-login this account", ui::yellow("‚ö†"));
                     } else {
                         if let Err(e) = fs::copy(&kiro_data, snapshot_path) {
                             return Err(anyhow!("Failed to sync updated token to snapshot: {}", e));
                         }
                         #[cfg(unix)]
                         if let Err(e) = fs::set_permissions(snapshot_path, fs::Permissions::from_mode(0o600)) {
-                            println!("{} Failed to set snapshot permissions: {}", ui::yellow("‚ö?), e);
+                            println!("{} Failed to set snapshot permissions: {}", ui::yellow("‚ö†"), e);
                         }
                         token_refreshed = true;
                     }
                 }
                 Err(e) => {
-                    println!("{} Token refresh failed: {}", ui::yellow("‚ö?), e);
-                    println!("{} Account may have expired, please re-login", ui::yellow("‚ö?));
+                    println!("{} Token refresh failed: {}", ui::yellow("‚ö†"), e);
+                    println!("{} Account may have expired, please re-login", ui::yellow("‚ö†"));
                 }
             }
         }
         Err(e) => {
-            println!("{} Cannot extract refresh token: {}", ui::yellow("‚ö?), e);
+            println!("{} Cannot extract refresh token: {}", ui::yellow("‚ö†"), e);
         }
     }
 
@@ -686,17 +686,17 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
             "UPDATE accounts SET machine_id = ?1 WHERE alias = ?2",
             params![new_id.clone(), alias],
         );
-        println!("{} Generated new machine ID: {}", ui::cyan("‚Ü?), new_id);
+        println!("{} Generated new machine ID: {}", ui::cyan("‚Üí"), new_id);
         new_id
     };
     
     match crate::core::machine_id::write_machine_id(&target_machine_id) {
         Ok(_) => {
-            println!("{} Machine ID synced to system", ui::green("‚ú?));
+            println!("{} Machine ID synced to system", ui::green("‚úì"));
         }
         Err(e) => {
-            println!("{} Failed to sync machine ID to system: {}", ui::yellow("‚ö?), e);
-            println!("{} Machine ID saved to database only", ui::yellow("‚Ü?));
+            println!("{} Failed to sync machine ID to system: {}", ui::yellow("‚ö†"), e);
+            println!("{} Machine ID saved to database only", ui::yellow("‚Üí"));
         }
     }
 
@@ -712,11 +712,11 @@ pub fn cmd_switch(fm: &FileManager, alias: Option<String>) -> Result<()> {
 
     if token_refreshed {
         println!("{} Switched to account '{}' (token refreshed)", 
-            ui::green("‚ú?), 
+            ui::green("‚úì"), 
             ui::cyan(&alias)
         );
     } else {
-        println!("{} Switched to account '{}'", ui::green("‚ú?), ui::cyan(&alias));
+        println!("{} Switched to account '{}'", ui::green("‚úì"), ui::cyan(&alias));
     }
     
     Ok(())
@@ -785,7 +785,7 @@ pub fn cmd_export(fm: &FileManager, alias: Option<String>, output: &str) -> Resu
     };
     
     println!("{} Exported {} account(s) to {}", 
-        ui::green("‚ú?), 
+        ui::green("‚úì"), 
         count, 
         ui::cyan(output)
     );
@@ -796,7 +796,7 @@ pub fn cmd_import(fm: &FileManager, file: &str, force: bool) -> Result<()> {
     let importer = Importer::new(fm.clone());
     importer.import(file, force)?;
 
-    println!("{} Imported accounts from {}", ui::green("‚ú?), ui::cyan(file));
+    println!("{} Imported accounts from {}", ui::green("‚úì"), ui::cyan(file));
     Ok(())
 }
 
@@ -820,7 +820,7 @@ pub fn cmd_clean(fm: &FileManager) -> Result<()> {
     
     for alias in &invalid_snapshots {
         db::remove_account(&conn, alias)?;
-        println!("{} Removed invalid account: {}", ui::yellow("‚ö?), ui::cyan(alias));
+        println!("{} Removed invalid account: {}", ui::yellow("‚ö†"), ui::cyan(alias));
     }
     
     // Deduplicate by email, keeping the most recent
@@ -838,15 +838,15 @@ pub fn cmd_clean(fm: &FileManager) -> Result<()> {
     
     for alias in &to_remove {
         db::remove_account(&conn, alias)?;
-        println!("{} Removed duplicate account: {}", ui::yellow("‚ö?), ui::cyan(alias));
+        println!("{} Removed duplicate account: {}", ui::yellow("‚ö†"), ui::cyan(alias));
     }
     
     let total_removed = invalid_snapshots.len() + to_remove.len();
     
     if total_removed > 0 {
-        println!("\n{} Cleaned {} account(s)", ui::green("‚ú?), total_removed);
+        println!("\n{} Cleaned {} account(s)", ui::green("‚úì"), total_removed);
     } else {
-        println!("{} No issues found", ui::green("‚ú?));
+        println!("{} No issues found", ui::green("‚úì"));
     }
     
     Ok(())
@@ -867,7 +867,7 @@ pub fn cmd_logout(fm: &FileManager) -> Result<()> {
         }
         return Err(anyhow!("Failed to remove login data: {}", e));
     }
-    println!("{} Logged out (local data removed)", ui::green("‚ú?));
+    println!("{} Logged out (local data removed)", ui::green("‚úì"));
     Ok(())
 }
 
@@ -898,7 +898,7 @@ pub fn cmd_update(fm: &FileManager, alias: Option<String>, all: bool) -> Result<
         indices.iter().map(|&i| accounts[i].alias.clone()).collect()
     };
 
-    println!("{} Updating {} account(s)...", ui::cyan("‚Ü?), aliases_to_update.len());
+    println!("{} Updating {} account(s)...", ui::cyan("‚Üí"), aliases_to_update.len());
     
     let updater = Updater::new(fm.clone());
     let results = updater.update_multiple(&aliases_to_update)?;
@@ -909,16 +909,16 @@ pub fn cmd_update(fm: &FileManager, alias: Option<String>, all: bool) -> Result<
     for result in &results {
         if result.success {
             if result.changes.is_empty() {
-                println!("{} {} - No changes", ui::green("‚ú?), ui::cyan(&result.alias));
+                println!("{} {} - No changes", ui::green("‚úì"), ui::cyan(&result.alias));
             } else {
-                println!("{} {} - Updated:", ui::green("‚ú?), ui::cyan(&result.alias));
+                println!("{} {} - Updated:", ui::green("‚úì"), ui::cyan(&result.alias));
                 for change in &result.changes {
                     println!("  {}", change);
                 }
             }
         } else {
             println!("{} {} - {}", 
-                ui::red("‚ú?), 
+                ui::red("‚úó"), 
                 ui::cyan(&result.alias), 
                 result.error.as_ref().unwrap_or(&"Unknown error".to_string())
             );
@@ -943,29 +943,29 @@ pub fn cmd_test() -> Result<()> {
     let mut failed = 0;
     
     // Test 1: DB CRUD
-    print!("  {} DB CRUD operations... ", ui::cyan("‚Ü?));
+    print!("  {} DB CRUD operations... ", ui::cyan("‚Üí"));
     match test_db_crud() {
-        Ok(_) => { println!("{}", ui::green("‚ú?)); passed += 1; }
-        Err(e) => { println!("{} {}", ui::red("‚ú?), e); failed += 1; }
+        Ok(_) => { println!("{}", ui::green("‚úì")); passed += 1; }
+        Err(e) => { println!("{} {}", ui::red("‚úó"), e); failed += 1; }
     }
     
     // Test 2: Migration
-    print!("  {} JSON to SQLite migration... ", ui::cyan("‚Ü?));
+    print!("  {} JSON to SQLite migration... ", ui::cyan("‚Üí"));
     match test_migration() {
-        Ok(_) => { println!("{}", ui::green("‚ú?)); passed += 1; }
-        Err(e) => { println!("{} {}", ui::red("‚ú?), e); failed += 1; }
+        Ok(_) => { println!("{}", ui::green("‚úì")); passed += 1; }
+        Err(e) => { println!("{} {}", ui::red("‚úó"), e); failed += 1; }
     }
     
     // Test 3: Account switching
-    print!("  {} Account switching... ", ui::cyan("‚Ü?));
+    print!("  {} Account switching... ", ui::cyan("‚Üí"));
     match test_switch_accounts() {
-        Ok(_) => { println!("{}", ui::green("‚ú?)); passed += 1; }
-        Err(e) => { println!("{} {}", ui::red("‚ú?), e); failed += 1; }
+        Ok(_) => { println!("{}", ui::green("‚úì")); passed += 1; }
+        Err(e) => { println!("{} {}", ui::red("‚úó"), e); failed += 1; }
     }
     
     println!();
     if failed == 0 {
-        println!("{} All tests passed ({}/{})", ui::green("‚ú?), passed, passed + failed);
+        println!("{} All tests passed ({}/{})", ui::green("‚úì"), passed, passed + failed);
         Ok(())
     } else {
         Err(anyhow!("{} tests failed, {} passed", failed, passed))
@@ -1135,7 +1135,7 @@ fn create_mock_kiro_data(path: &std::path::PathBuf, email: &str) -> Result<()> {
 }
 
 pub fn cmd_self_update(force: bool) -> Result<()> {
-    println!("{}", ui::cyan("‚Ü?Checking for updates..."));
+    println!("{}", ui::cyan("‚Üí Checking for updates..."));
     
     let api_url = "https://api.github.com/repos/911218sky/kiro-cli-auth/releases/latest";
     let response = ureq::get(api_url)
@@ -1152,8 +1152,8 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
     let current_version = env!("CARGO_PKG_VERSION");
     let latest_version_str = latest_version.trim_start_matches('v');
     
-    println!("{} Current version: {}", ui::cyan("‚Ü?), current_version);
-    println!("{} Latest version: {}", ui::cyan("‚Ü?), latest_version_str);
+    println!("{} Current version: {}", ui::cyan("‚Üí"), current_version);
+    println!("{} Latest version: {}", ui::cyan("‚Üí"), latest_version_str);
     
     // Simple version comparison: split by '.' and compare numerically
     let current_parts: Vec<u32> = current_version.split('.').filter_map(|s| s.parse().ok()).collect();
@@ -1174,11 +1174,11 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
             .unwrap_or(latest_parts.len() > current_parts.len());
         
         if !is_newer {
-            println!("{}", ui::green("‚ú?Already up to date"));
+            println!("{}", ui::green("‚úì Already up to date"));
             return Ok(());
         }
     } else {
-        println!("{}", ui::yellow("‚ö?Force update enabled, skipping version check"));
+        println!("{}", ui::yellow("‚ö† Force update enabled, skipping version check"));
     }
     
     // Determine platform-specific asset name
@@ -1212,7 +1212,7 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
         .and_then(|a| a["browser_download_url"].as_str())
         .ok_or_else(|| anyhow!("Asset {} not found in release", asset_name))?;
     
-    println!("{} Downloading {}...", ui::cyan("‚Ü?), asset_name);
+    println!("{} Downloading {}...", ui::cyan("‚Üí"), asset_name);
     
     let response = ureq::get(download_url)
         .call()
@@ -1229,7 +1229,7 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
     let current_exe = std::env::current_exe()
         .context("Failed to get current executable path")?;
     
-    println!("{} Installing to {:?}...", ui::cyan("‚Ü?), current_exe);
+    println!("{} Installing to {:?}...", ui::cyan("‚Üí"), current_exe);
     
     #[cfg(unix)]
     {
@@ -1249,13 +1249,13 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
 
     // Backup current executable
     std::fs::rename(&current_exe, &backup_path)
-        .context("Failed to backup current executable (try running as Administrator)")?;
+        .context("Failed to backup current executable")?;
 
     // Install new binary; rollback on failure
     if let Err(copy_err) = std::fs::copy(temp_path, &current_exe) {
         eprintln!("error: failed to install new executable: {}", copy_err);
         if let Err(restore_err) = std::fs::rename(&backup_path, &current_exe) {
-            eprintln!("error: rollback also failed ‚Ä?please manually restore {:?} to {:?}", backup_path, current_exe);
+            eprintln!("error: rollback also failed ‚Äî please manually restore {:?} to {:?}", backup_path, current_exe);
             return Err(anyhow!("Install failed and rollback failed: install={}, rollback={}", copy_err, restore_err));
         }
         return Err(anyhow!("Failed to install new executable (rolled back): {}", copy_err));
@@ -1272,8 +1272,8 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
         eprintln!("warn: could not remove backup {:?}: {}", backup_path, e);
     }
     
-    println!("{} Successfully updated to {}", ui::green("‚ú?), latest_version);
-    println!("{} Please restart kiro-cli-auth to use the new version", ui::yellow("‚ö?));
+    println!("{} Successfully updated to {}", ui::green("‚úì"), latest_version);
+    println!("{} Please restart kiro-cli-auth to use the new version", ui::yellow("‚ö†"));
     
     Ok(())
 }
