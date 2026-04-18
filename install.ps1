@@ -29,7 +29,9 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 Write-Host "Installing kiro-cli-auth for Windows..." -ForegroundColor Cyan
-Write-Host ""# Get latest release info
+Write-Host ""
+
+# Get latest release info
 Write-Host "Fetching latest release..." -ForegroundColor Cyan
 $apiUrl = "https://api.github.com/repos/911218sky/kiro-cli-auth/releases/latest"
 try {
@@ -49,6 +51,9 @@ if (-not $asset) {
     exit 1
 }
 
+# Find checksum asset
+$checksumAsset = $release.assets | Where-Object { $_.name -eq "kiro-cli-auth-windows.exe.sha256" }
+
 Write-Host "Latest version: $version" -ForegroundColor Green
 Write-Host ""
 
@@ -65,6 +70,32 @@ try {
     exit 1
 }
 
+# Verify checksum if available
+if ($checksumAsset) {
+    Write-Host "Verifying checksum..." -ForegroundColor Cyan
+    try {
+        $checksumContent = (Invoke-WebRequest -Uri $checksumAsset.browser_download_url -UseBasicParsing).Content.Trim()
+        $expectedHash = ($checksumContent -split '\s+')[0].ToUpper()
+        $actualHash = (Get-FileHash -Path $tempFile -Algorithm SHA256).Hash.ToUpper()
+        if ($actualHash -ne $expectedHash) {
+            Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
+            Write-Host "ERROR: Checksum mismatch! File may be corrupted or tampered." -ForegroundColor Red
+            Write-Host "  Expected: $expectedHash" -ForegroundColor Yellow
+            Write-Host "  Got:      $actualHash" -ForegroundColor Yellow
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
+        Write-Host "Checksum verified." -ForegroundColor Green
+    } catch {
+        Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
+        Write-Host "ERROR: Failed to verify checksum: $_" -ForegroundColor Red
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
+} else {
+    Write-Host "WARNING: No checksum file found, skipping verification." -ForegroundColor Yellow
+}
+
 # Install to Program Files
 $installDir = "$env:ProgramFiles\Kiro"
 Write-Host "Installing to: $installDir" -ForegroundColor Cyan
@@ -77,6 +108,7 @@ $installPath = "$installDir\kiro-cli-auth.exe"
 try {
     Move-Item -Path $tempFile -Destination $installPath -Force
 } catch {
+    Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
     Write-Host "ERROR: Failed to install binary: $_" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
