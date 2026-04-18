@@ -1268,11 +1268,20 @@ pub fn cmd_self_update(force: bool) -> Result<()> {
             .context("Failed to set executable permission")?;
     }
 
-    if let Err(e) = std::fs::remove_file(&backup_path) {
-        eprintln!("warn: could not remove backup {:?}: {}", backup_path, e);
+    // On Windows, the backup file may be locked by the OS, so we skip deletion
+    // It will be cleaned up on the next update (see lines above)
+    #[cfg(not(target_os = "windows"))]
+    {
+        if let Err(e) = std::fs::remove_file(&backup_path) {
+            eprintln!("warn: could not remove backup {:?}: {}", backup_path, e);
+        }
     }
     
     println!("{} Successfully updated to {}", ui::green("✓"), latest_version);
+    
+    #[cfg(target_os = "windows")]
+    println!("{} Backup saved to {:?} (will be cleaned up on next update)", ui::cyan("→"), backup_path);
+    
     println!("{} Please restart kiro-cli-auth to use the new version", ui::yellow("⚠"));
     
     Ok(())
