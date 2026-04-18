@@ -120,3 +120,12 @@ pub fn extract_account_info(db_path: &Path) -> Result<(String, String)> {
     
     Ok((account_info.email, provider.to_string()))
 }
+
+// Clear tokens from database (used on Windows when file cannot be deleted)
+pub fn clear_token(db_path: &Path) -> Result<()> {
+    let conn = Connection::open(db_path)
+        .with_context(|| format!("Failed to open SQLite database: {:?}", db_path))?;
+    conn.execute("DELETE FROM auth_kv WHERE key IN ('kirocli:odic:token', 'kirocli:social:token')", [])
+        .context("Failed to clear tokens from database")?;
+    Ok(())
+}

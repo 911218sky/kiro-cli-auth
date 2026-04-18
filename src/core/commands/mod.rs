@@ -195,7 +195,13 @@ pub fn cmd_login(fm: &FileManager, alias: Option<String>) -> Result<()> {
         
         if should_remove {
             println!("{} Removing local login data...", ui::cyan("→"));
-            fs::remove_file(&kiro_data)?;
+            if let Err(e) = fs::remove_file(&kiro_data) {
+                #[cfg(target_os = "windows")]
+                if e.raw_os_error() == Some(32) {
+                    return Err(anyhow!("Cannot remove login data: Kiro is running and has locked the file.\nPlease close Kiro (kiro-cli and kiro-account-manager) and try again."));
+                }
+                return Err(anyhow!("Failed to remove login data: {}", e));
+            }
         }
     }
 
@@ -845,7 +851,13 @@ pub fn cmd_logout(fm: &FileManager) -> Result<()> {
         return Ok(());
     }
 
-    fs::remove_file(&kiro_data)?;
+    if let Err(e) = fs::remove_file(&kiro_data) {
+        #[cfg(target_os = "windows")]
+        if e.raw_os_error() == Some(32) {
+            return Err(anyhow!("Cannot logout: Kiro is running and has locked the file.\nPlease close Kiro (kiro-cli and kiro-account-manager) and try again."));
+        }
+        return Err(anyhow!("Failed to remove login data: {}", e));
+    }
     println!("{} Logged out (local data removed)", ui::green("✓"));
     Ok(())
 }
