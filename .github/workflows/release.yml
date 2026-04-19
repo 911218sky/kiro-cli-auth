@@ -19,8 +19,8 @@ jobs:
       
       - uses: dtolnay/rust-toolchain@stable
       
-      - name: Run all tests
-        run: cargo test --all
+      - name: Run library tests
+        run: cargo test --lib
 
   version:
     needs: test

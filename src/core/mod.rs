@@ -2,6 +2,8 @@
 pub mod models;
 pub mod data;
 pub mod auth;
+pub mod cache;
+pub mod config;
 pub mod fs;
 pub mod transfer;
 pub mod commands;

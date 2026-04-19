@@ -127,6 +127,46 @@ export KIRO_CLI_AUTH_DIR=/custom/path
 # Account data will now be stored in /custom/path/ instead of ~/.kiro-cli-auth/
 ```
 
+**`KIRO_NO_CACHE`** - Disable cache globally
+
+Set to `1`, `true`, or `yes` to disable cache for all commands.
+
+Example:
+```bash
+export KIRO_NO_CACHE=1
+# All commands will fetch fresh data from API instead of using cache
+```
+
+**`KIRO_CACHE_TTL`** - Cache time-to-live in seconds
+
+Default: `300` (5 minutes)
+
+Example:
+```bash
+export KIRO_CACHE_TTL=600
+# Cache will be valid for 10 minutes
+```
+
+**`KIRO_CACHE_PATH`** - Custom cache database location
+
+Default: `/tmp/kiro-cli-auth-cache.db`
+
+Example:
+```bash
+export KIRO_CACHE_PATH=/var/cache/kiro-cli-auth.db
+# Cache will be stored at custom location
+```
+
+**`KIRO_API_TIMEOUT`** - API request timeout in seconds
+
+Default: `15` seconds
+
+Example:
+```bash
+export KIRO_API_TIMEOUT=30
+# API requests will timeout after 30 seconds
+```
+
 **`XDG_DATA_HOME`** - Change kiro-cli main program data location
 
 kiro-cli-auth needs to read kiro-cli's main database to sync machine ID. This variable tells it where to find kiro-cli's database.
@@ -145,6 +185,10 @@ export XDG_DATA_HOME=/my/data
 
 **In short:**
 - `KIRO_CLI_AUTH_DIR` = where kiro-cli-auth stores its own data
+- `KIRO_NO_CACHE` = disable cache globally
+- `KIRO_CACHE_TTL` = how long cache is valid
+- `KIRO_CACHE_PATH` = where cache is stored
+- `KIRO_API_TIMEOUT` = API request timeout
 - `XDG_DATA_HOME` = where kiro-cli main program stores its data
 
 ## Commands
@@ -152,6 +196,7 @@ export XDG_DATA_HOME=/my/data
 ```bash
 kiro-cli-auth login [alias]      # Login with optional alias
 kiro-cli-auth list               # List all accounts
+kiro-cli-auth list --no-cache    # List accounts without using cache
 kiro-cli-auth switch [alias]     # Switch account (interactive if no alias)
 kiro-cli-auth current            # Show current account
 kiro-cli-auth remove <alias>     # Remove account
@@ -160,4 +205,23 @@ kiro-cli-auth clean              # Clean invalid accounts
 kiro-cli-auth export <file>      # Export accounts
 kiro-cli-auth import <file>      # Import accounts
 kiro-cli-auth self-update        # Update to latest version
+```
+
+### Cache Control
+
+The `list` command uses a 5-minute cache by default to reduce API requests. You can bypass the cache in two ways:
+
+**Option 1: Command-line flag**
+```bash
+kiro-cli-auth list --no-cache
+```
+
+**Option 2: Environment variable**
+```bash
+# Disable cache for all commands
+export KIRO_NO_CACHE=1
+kiro-cli-auth list
+
+# Or for a single command
+KIRO_NO_CACHE=1 kiro-cli-auth list
 ```

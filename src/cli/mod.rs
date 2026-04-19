@@ -18,7 +18,10 @@ pub enum Commands {
         alias: Option<String>,
     },
     /// List all accounts
-    List,
+    List {
+        #[arg(long, help = "Skip cache and fetch fresh data from API")]
+        no_cache: bool,
+    },
     /// Show current account
     Current,
     /// Remove an account
@@ -56,8 +59,6 @@ pub enum Commands {
         #[arg(long, help = "Update all accounts without prompting")]
         all: bool,
     },
-    /// Run integration tests
-    Test,
     /// Update kiro-cli-auth to the latest version
     SelfUpdate {
         #[arg(long, help = "Force update even if already up to date")]

@@ -16,7 +16,7 @@ fn main() -> Result<()> {
     // Route CLI commands to their handlers
     let result = match cli.command {
         Commands::Login { alias } => cmd_login(&fm, alias),
-        Commands::List => cmd_list(&fm),
+        Commands::List { no_cache } => cmd_list(&fm, no_cache),
         Commands::Current => cmd_current(&fm),
         Commands::Remove { alias } => cmd_remove(&fm, alias),
         Commands::Switch { alias } => cmd_switch(&fm, alias),
@@ -25,7 +25,6 @@ fn main() -> Result<()> {
         Commands::Clean => cmd_clean(&fm),
         Commands::Logout => cmd_logout(&fm),
         Commands::Update { alias, all } => cmd_update(&fm, alias, all),
-        Commands::Test => cmd_test(),
         Commands::SelfUpdate { force } => cmd_self_update(force),
     };
 

@@ -147,7 +147,7 @@ pub fn write_machine_id(machine_id: &str) -> Result<()> {
             Ok(())
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            if stderr.contains("Access is denied") || stderr.contains("拒絕存取") {
+            if stderr.contains("Access is denied") {
                 Err(anyhow::anyhow!(
                     "Failed to write Windows machine ID: Administrator privileges required.\n\
                      Please run PowerShell as Administrator."

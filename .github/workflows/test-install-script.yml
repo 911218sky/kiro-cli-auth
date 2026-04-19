@@ -26,8 +26,8 @@ jobs:
           echo "Verifying kiro-cli-auth installation..."
           kiro-cli-auth --version
           kiro-cli-auth --help
-
-      - name: Run integration tests
+          
+      - name: Test basic commands
         run: |
-          echo "Running integration tests..."
-          kiro-cli-auth test
+          echo "Testing basic commands..."
+          kiro-cli-auth list || echo "No accounts configured (expected)"

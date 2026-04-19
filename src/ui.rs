@@ -45,6 +45,7 @@ pub fn bold(s: &str) -> String {
 /// Converts Ctrl-C/Esc into UserCancelled error.
 pub fn select(prompt: &str, items: &[String]) -> Result<usize> {
     let selected = inquire::Select::new(prompt, items.to_vec())
+        .with_page_size(20)
         .prompt()
         .map_err(|e| match e {
             inquire::InquireError::OperationCanceled
@@ -64,6 +65,7 @@ pub fn select(prompt: &str, items: &[String]) -> Result<usize> {
 /// Converts Ctrl-C/Esc into UserCancelled error.
 pub fn multi_select(prompt: &str, items: &[String]) -> Result<Vec<usize>> {
     let selected = inquire::MultiSelect::new(prompt, items.to_vec())
+        .with_page_size(20)
         .with_help_message("[↑↓ to move, space to select one, → to all, ← to none, type to filter]")
         .prompt()
         .map_err(|e| match e {

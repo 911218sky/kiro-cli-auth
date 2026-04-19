@@ -1,8 +1,10 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
+use crate::core::config;
+
 // Account information returned from Kiro API
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct AccountInfo {
     pub email: String,
     pub subscription_type: String,
@@ -10,6 +12,8 @@ pub struct AccountInfo {
     pub current_usage: f64,
     pub usage_limit: f64,
     pub is_banned: bool,
+    pub trial_expiry: Option<String>,
+    pub next_reset: Option<String>,
 }
 
 // API response structure for usage limits endpoint
@@ -21,6 +25,8 @@ struct UsageData {
     subscription_info: Option<SubscriptionInfo>,
     #[serde(rename = "userInfo")]
     user_info: Option<UserInfo>,
+    #[serde(rename = "nextDateReset")]
+    next_date_reset: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,16 +45,18 @@ struct FreeTrialInfo {
     status: Option<String>,
     #[serde(rename = "usageLimit")]
     usage_limit: Option<f64>,
-    #[allow(dead_code)]
     #[serde(rename = "currentUsage")]
     current_usage: Option<f64>,
+    #[serde(rename = "freeTrialExpiry")]
+    expiry: Option<f64>,  // Unix timestamp
 }
 
 #[derive(Debug, Deserialize)]
 struct SubscriptionInfo {
-    #[serde(rename = "subscriptionType")]
+    #[serde(rename = "type")]
     subscription_type: Option<String>,
-    status: Option<String>,
+    #[serde(rename = "subscriptionTitle")]
+    title: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -57,23 +65,26 @@ struct UserInfo {
 }
 
 pub fn get_account_info(token: &str) -> Result<AccountInfo> {
-    let url = "https://q.us-east-1.amazonaws.com/getUsageLimits?origin=AI_EDITOR&resourceType=AGENTIC_REQUEST&isEmailRequired=true";
+    let url = config::API_USAGE_LIMITS_URL;
     
-    // Retry up to 2 times with 500ms delay
+    // Retry up to 2 times with delay
     let mut last_error = None;
     for attempt in 0..2 {
         if attempt > 0 {
-            std::thread::sleep(std::time::Duration::from_millis(500));
+            std::thread::sleep(config::api_retry_delay());
         }
         
         match ureq::get(url)
-            .timeout(std::time::Duration::from_secs(15))
+            .timeout(config::api_timeout())
             .set("Accept", "application/json")
             .set("Authorization", &format!("Bearer {}", token))
             .call()
         {
             Ok(response) => {
-                let usage_data: UsageData = response.into_json()
+                let response_text = response.into_string()
+                    .context("Failed to read API response")?;
+                
+                let usage_data: UsageData = serde_json::from_str(&response_text)
                     .context("Failed to parse API response as JSON")?;
 
                 let email = usage_data.user_info
@@ -82,27 +93,29 @@ pub fn get_account_info(token: &str) -> Result<AccountInfo> {
 
                 let subscription_type = usage_data.subscription_info
                     .as_ref()
-                    .and_then(|s| s.subscription_type.clone())
+                    .and_then(|s| s.title.clone().or_else(|| s.subscription_type.clone()))
                     .filter(|s| !s.is_empty() && s != "Unknown")
                     .unwrap_or_else(|| "Free".to_string());
 
-                let status = usage_data.subscription_info
-                    .as_ref()
-                    .and_then(|s| s.status.clone())
-                    .unwrap_or_else(|| "Unknown".to_string());
-
-                let is_banned = status.to_uppercase() == "BANNED";
+                let status = "Active".to_string();
+                let is_banned = false;
 
                 let mut current_usage = 0.0;
                 let mut usage_limit = 0.0;
+                let mut trial_expiry = None;
     
                 // Combine base subscription usage with active free trial usage
-                if let Some(breakdown_list) = usage_data.usage_breakdown_list
-                    && let Some(breakdown) = breakdown_list.into_iter().next() {
+                if let Some(breakdown_list) = usage_data.usage_breakdown_list {
+                    if let Some(breakdown) = breakdown_list.into_iter().next() {
                         let base_limit = breakdown.usage_limit.unwrap_or(0.0);
                         let base_current = breakdown.current_usage.unwrap_or(0.0);
                         
                         let (trial_limit, trial_current) = if let Some(trial_info) = &breakdown.free_trial_info {
+                            if let Some(expiry_ts) = trial_info.expiry {
+                                trial_expiry = chrono::DateTime::from_timestamp(expiry_ts as i64, 0)
+                                    .map(|dt| dt.to_rfc3339());
+                            }
+                            
                             if let Some(trial_status) = &trial_info.status {
                                 if trial_status.to_uppercase() == "ACTIVE" {
                                     (
@@ -122,6 +135,13 @@ pub fn get_account_info(token: &str) -> Result<AccountInfo> {
                         current_usage = base_current + trial_current;
                         usage_limit = base_limit + trial_limit;
                     }
+                }
+
+                let next_reset = usage_data.next_date_reset.map(|ts| {
+                    chrono::DateTime::from_timestamp(ts as i64, 0)
+                        .map(|dt| dt.format("%Y-%m-%d").to_string())
+                        .unwrap_or_default()
+                });
 
                 return Ok(AccountInfo {
                     email,
@@ -130,6 +150,8 @@ pub fn get_account_info(token: &str) -> Result<AccountInfo> {
                     current_usage,
                     usage_limit,
                     is_banned,
+                    trial_expiry,
+                    next_reset,
                 });
             }
             Err(e) => {
