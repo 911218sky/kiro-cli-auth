@@ -8,6 +8,7 @@ mod list;
 mod current;
 mod remove;
 mod switch;
+mod self_update;
 
 // Re-export command functions
 pub use login::cmd_login;
@@ -15,6 +16,7 @@ pub use list::cmd_list;
 pub use current::cmd_current;
 pub use remove::cmd_remove;
 pub use switch::cmd_switch;
+pub use self_update::cmd_self_update;
 
 // Temporary: Keep remaining commands in this file until fully extracted
 use anyhow::{anyhow, Result};
@@ -235,10 +237,5 @@ pub fn cmd_update(fm: &FileManager, alias: Option<String>, all: bool) -> Result<
         results.len()
     );
     
-    Ok(())
-}
-
-pub fn cmd_self_update(_force: bool) -> Result<()> {
-    println!("{}", ui::yellow("Self-update command not yet refactored"));
     Ok(())
 }
