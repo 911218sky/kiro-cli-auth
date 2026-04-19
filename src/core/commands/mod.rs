@@ -65,9 +65,21 @@ pub fn cmd_export(fm: &FileManager, alias: Option<String>, output: &str) -> Resu
         // Sort accounts by trial expiry days (ascending)
         utils::sort_by_trial_days(&mut results);
 
+        // Use shorter format for multi-select to avoid line wrapping
         let items: Vec<String> = results.iter()
-            .map(|(account, is_current, info_opt)| {
-                format_account_display(account, *is_current, info_opt.as_ref())
+            .map(|(account, is_current, _info_opt)| {
+                let marker = if *is_current { "●" } else { "○" };
+                let provider = match account.provider.as_str() {
+                    "google" => ui::magenta("[Google]"),
+                    "aws" => ui::cyan("[AWS]"),
+                    _ => format!("[{}]", account.provider),
+                };
+                format!("{} {} {} ({})", 
+                    marker,
+                    provider,
+                    ui::cyan(&account.alias),
+                    account.email
+                )
             })
             .collect();
         
