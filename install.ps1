@@ -97,7 +97,7 @@ if ($checksumAsset) {
 }
 
 # Install to Program Files
-$installDir = "$env:ProgramFiles\Kiro"
+$installDir = "$env:ProgramFiles\kiro-cli-auth"
 Write-Host "Installing to: $installDir" -ForegroundColor Cyan
 
 if (-not (Test-Path $installDir)) {

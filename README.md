@@ -49,7 +49,7 @@ sudo mv kiro-cli-auth-macos-aarch64 /usr/local/bin/kiro-cli-auth
 irm https://raw.githubusercontent.com/911218sky/kiro-cli-auth/main/install.ps1 | iex
 ```
 
-Or manually download from [releases](https://github.com/911218sky/kiro-cli-auth/releases/latest) and place in `C:\Program Files\Kiro\`
+Or manually download from [releases](https://github.com/911218sky/kiro-cli-auth/releases/latest) and place in `C:\Program Files\kiro-cli-auth\`
 
 ## Update
 
@@ -73,7 +73,7 @@ rm -rf ~/.kiro-cli-auth
 Run in PowerShell as Administrator:
 
 ```powershell
-Remove-Item "C:\Program Files\Kiro\kiro-cli-auth.exe" -Force
+Remove-Item "C:\Program Files\kiro-cli-auth\kiro-cli-auth.exe" -Force
 Remove-Item "$env:APPDATA\kiro-cli-auth" -Recurse -Force
 ```
 
